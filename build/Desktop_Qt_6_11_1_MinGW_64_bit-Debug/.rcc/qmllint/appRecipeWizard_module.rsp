@@ -1,0 +1,16 @@
+-I
+C:/Users/User/RecipeWizard/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug
+-I
+C:/Users/User/RecipeWizard/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug/RecipeWizard
+-I
+C:/Users/User/RecipeWizard/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug
+-I
+C:/Qt/6.11.1/mingw_64/qml
+--resource
+C:/Users/User/RecipeWizard/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug/.qt/rcc/qmake_RecipeWizard.qrc
+--resource
+C:/Users/User/RecipeWizard/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug/.qt/rcc/appRecipeWizard_raw_qml_0.qrc
+--resource
+C:/Users/User/RecipeWizard/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug/.qt/rcc/appRecipeWizard_raw_res_0.qrc
+--module
+RecipeWizard
