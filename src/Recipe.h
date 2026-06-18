@@ -2,23 +2,20 @@
 
 #include <QString>
 
-
+/**
+ * @brief Структура для хранения данных рецепта.
+ */
 struct Recipe
 {
-    int id = -1;
-
-    QString title;
-    QString ingredients;
-    QString tags;
-    QString imageUrl;
-
-    int calories = 0;
-
-    double proteins = 0.0;
-    double fats = 0.0;
-    double carbs = 0.0;
-
-    int servings = 1;
-
-    QString instructions;
+    int id = -1;               ///< Идентификатор записи в таблице (-1 — ещё не сохранён).
+    QString title;             ///< Название блюда.
+    QString ingredients;       ///< Список ингредиентов одной строкой, через запятую.
+    QString tags;              ///< Теги через запятую (например: "обед, веган").
+    QString imageUrl;          ///< Путь или URL картинки блюда.
+    int calories = 0;          ///< Калорийность одной порции, ккал.
+    double proteins = 0.0;     ///< Белки одной порции, г.
+    double fats = 0.0;         ///< Жиры одной порции, г.
+    double carbs = 0.0;        ///< Углеводы одной порции, г.
+    int servings = 1;          ///< Количество порций, на которое рассчитан рецепт.
+    QString instructions;      ///< Пошаговая инструкция, шаги разделены переводом строки.
 };

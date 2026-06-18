@@ -12,7 +12,6 @@ Page {
         contentWidth: availableWidth
 
         Column {
-            // Ограничиваем ширину и центрируем
             width: Math.min(parent.width - 40, 450)
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 20
@@ -24,14 +23,11 @@ Page {
                 font.family: "Georgia"; font.pixelSize: 28; font.bold: true; color: window.colorTextMain
             }
 
-            // --- КАРТОЧКА 1: ОСНОВНОЕ ---
             Rectangle {
                 width: parent.width; height: contentInfo.implicitHeight + 40
                 radius: 20; color: "white"; border.color: "#F0EBE3"
-
                 ColumnLayout {
                     id: contentInfo; anchors.fill: parent; anchors.margins: 20; spacing: 15
-
                     TextField {
                         id: titleField; placeholderText: "Название блюда"; Layout.fillWidth: true
                         background: Rectangle { radius: 10; border.color: "#EEE" }
@@ -43,7 +39,6 @@ Page {
                 }
             }
 
-            // --- КАРТОЧКА 2: ИНГРЕДИЕНТЫ ---
             Label { text: "Ингредиенты"; font.bold: true; font.pixelSize: 14; opacity: 0.6 }
             Rectangle {
                 width: parent.width; height: 120; radius: 20; color: "white"; border.color: "#F0EBE3"
@@ -55,8 +50,7 @@ Page {
                 }
             }
 
-            // --- КАРТОЧКА 3: КБЖУ ---
-            Label { text: "Пищевая ценность (на порцию)"; font.bold: true; font.pixelSize: 14; opacity: 0.6 }
+            Label { text: "Пищевая ценность на порцию"; font.bold: true; font.pixelSize: 14; opacity: 0.6 }
             Rectangle {
                 width: parent.width; height: 130; radius: 20; color: "white"; border.color: "#F0EBE3"
                 GridLayout {
@@ -68,7 +62,6 @@ Page {
                 }
             }
 
-            // --- КАРТОЧКА 4: ШАГИ ---
             Label { text: "Инструкция (каждый шаг с новой строки)"; font.bold: true; font.pixelSize: 14; opacity: 0.6 }
             Rectangle {
                 width: parent.width; height: 150; radius: 20; color: "white"; border.color: "#F0EBE3"
@@ -80,20 +73,14 @@ Page {
                 }
             }
 
-            // КНОПКА СОХРАНЕНИЯ
             Button {
                 text: "СОХРАНИТЬ РЕЦЕПТ В БАЗУ ✨"
                 width: parent.width; height: 60
-
-                background: Rectangle {
-                    color: window.colorPrimary
-                    radius: 15
-                }
+                background: Rectangle { color: window.colorPrimary; radius: 15 }
                 contentItem: Text {
                     text: parent.text; color: "white"; font.bold: true
                     horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                 }
-
                 onClicked: {
                     if (titleField.text !== "") {
                         dbManager.addRecipe(
@@ -102,17 +89,15 @@ Page {
                             parseFloat(proteinsField.text) || 0,
                             parseFloat(fatsField.text) || 0,
                             parseFloat(carbsField.text) || 0,
-                            1, // порции по умолчанию
+                            1,
                             instructionsField.text
                         )
-                        myRecipeModel.refresh()
+                        mainModel.refresh()
 
-                        // Очистка
                         titleField.text = ""; ingredientsField.text = ""; tagsField.text = ""
                         caloriesField.text = ""; proteinsField.text = ""; fatsField.text = ""; carbsField.text = ""
                         instructionsField.text = ""
-
-                        tabBar.currentIndex = 0 // На главную
+                        tabBar.currentIndex = 0
                     }
                 }
             }

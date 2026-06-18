@@ -54,3 +54,12 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+build/
+docs/html/
+
+*.exe
+*.dll
+*.db
+
+.vscode/
+.idea/

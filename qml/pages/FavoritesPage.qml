@@ -6,7 +6,7 @@ Page {
     id: favoritesPage
     background: Rectangle { color: window.colorBg }
 
-    onVisibleChanged: if (visible) favoritesListView.model = dbManager.getFavorites()
+    onVisibleChanged: if (visible) favoritesView.forceLayout()
 
     ColumnLayout {
         anchors.fill: parent
@@ -15,27 +15,22 @@ Page {
 
         Label {
             text: "❤️ Любимые рецепты"
-            font.family: "Georgia"
-            font.pixelSize: 28
-            font.bold: true
+            font.family: "Georgia"; font.pixelSize: 28; font.bold: true
             color: window.colorTextMain
-            Layout.fillWidth: true
-            Layout.topMargin: 10
+            Layout.fillWidth: true; Layout.topMargin: 10
         }
 
         ListView {
-            id: favoritesListView
-            model: dbManager.getFavorites()
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            id: favoritesView
+            Layout.fillWidth: true; Layout.fillHeight: true
             clip: true
+            model: mainModel
             spacing: 0
 
             delegate: Item {
                 id: delegateWrapper
                 width: favoritesView.width
                 property bool isFavorite: dbManager.isFavorite(model.title)
-
                 height: isFavorite ? 152 : 0
                 visible: isFavorite
 

@@ -1,27 +1,22 @@
 #include "RecipeService.h"
 
-RecipeService::RecipeService(RecipeRepository* repository, QObject* parent)
+#include <algorithm>
+
+#include <QRegularExpression>
+
+RecipeService::RecipeService(RecipeRepository *repository, QObject *parent)
     : QObject(parent), repository_(repository)
 {
 }
+
 QList<Recipe> RecipeService::getAllRecipes()
 {
     return repository_->getAllRecipes();
 }
 
-bool RecipeService::addRecipe(const Recipe& recipe)
+bool RecipeService::addRecipe(const Recipe &recipe)
 {
     return repository_->addRecipe(recipe);
-}
-
-bool RecipeService::updateRecipe(const Recipe& recipe)
-{
-    return repository_->updateRecipe(recipe);
-}
-
-bool RecipeService::deleteRecipe(int id)
-{
-    return repository_->deleteRecipe(id);
 }
 
 Recipe RecipeService::getRecipeById(int id)
@@ -29,289 +24,219 @@ Recipe RecipeService::getRecipeById(int id)
     return repository_->getRecipeById(id);
 }
 
-bool RecipeService::recipeExists(const QString& title)
+bool RecipeService::recipeExists(const QString &title)
 {
     return repository_->recipeExists(title);
 }
 
-QList<Recipe> RecipeService::searchRecipes(
-    const QString& ingredientsText)
+QList<Recipe> RecipeService::searchRecipes(const QString &ingredientsText)
 {
-    QList<Recipe> recipes =
-        repository_->getAllRecipes();
-
-    if (ingredientsText.trimmed().isEmpty()) {
+    QList<Recipe> recipes = repository_->getAllRecipes();
+    if (ingredientsText.trimmed().isEmpty())
         return recipes;
-    }
 
     QList<Recipe> result;
-
-    QStringList ingredients =
-        ingredientsText.split(",",
-                              Qt::SkipEmptyParts);
-
-    for (const Recipe& recipe : recipes) {
-
-        bool match = false;
-
-        for (const QString& ingredient :
-             ingredients) {
-
-            if (recipe.ingredients.contains(
-                    ingredient.trimmed(),
-                    Qt::CaseInsensitive))
-            {
-                match = true;
+    const QStringList ingredients = ingredientsText.split(QLatin1Char(','), Qt::SkipEmptyParts);
+    for (const Recipe &recipe : recipes) {
+        for (const QString &ingredient : ingredients) {
+            if (recipe.ingredients.contains(ingredient.trimmed(), Qt::CaseInsensitive)) {
+                result.append(recipe);
                 break;
             }
         }
-
-        if (match) {
-            result.append(recipe);
-        }
     }
-
     return result;
 }
 
-QList<Recipe> RecipeService::findBestRecipes(
-    const QStringList& availableIngredients)
+QList<Recipe> RecipeService::findBestRecipes(const QStringList &availableIngredients)
 {
-    QList<Recipe> recipes =
-        repository_->getAllRecipes();
-
-    QList<Recipe> result;
-
-    int minMissing = INT_MAX;
-
-    for (const Recipe& recipe : recipes) {
-
-        QStringList recipeIngredients =
-            recipe.ingredients.split(
-                ",",
-                Qt::SkipEmptyParts);
-
-        int missingCount = 0;
-
-        for (QString ingredient :
-             recipeIngredients)
-        {
-            ingredient = ingredient.trimmed();
-
-            bool found = false;
-
-            for (QString available :
-                 availableIngredients)
-            {
-                if (ingredient.compare(
-                        available.trimmed(),
-                        Qt::CaseInsensitive) == 0)
-                {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                missingCount++;
-            }
-        }
-
-        if (missingCount < minMissing) {
-
-            minMissing = missingCount;
-
-            result.clear();
-            result.append(recipe);
-        }
-        else if (missingCount == minMissing)
-        {
-            result.append(recipe);
-        }
-    }
-
-    return result;
-}
-
-QList<Recipe> RecipeService::filterByTags(
-    const QStringList& tags)
-{
-    QList<Recipe> result;
-
-    for (const Recipe& recipe :
-         repository_->getAllRecipes())
+    struct Ranked
     {
-        bool match = true;
+        Recipe recipe;
+        int matches = 0;
+    };
 
-        for (const QString& tag : tags)
-        {
-            if (!recipe.tags.contains(
-                    tag.trimmed(),
-                    Qt::CaseInsensitive))
-            {
+    QList<Ranked> ranked;
+    for (const Recipe &recipe : repository_->getAllRecipes()) {
+        const QString composition = recipe.ingredients.toLower();
+        int matches = 0;
+        for (const QString &available : availableIngredients) {
+            const QString clean = available.trimmed().toLower();
+            if (!clean.isEmpty() && composition.contains(clean))
+                ++matches;
+        }
+        if (matches > 0)
+            ranked.append({recipe, matches});
+    }
+
+    std::sort(ranked.begin(), ranked.end(),
+              [](const Ranked &a, const Ranked &b) { return a.matches > b.matches; });
+
+    QList<Recipe> result;
+    result.reserve(ranked.size());
+    for (const Ranked &item : ranked)
+        result.append(item.recipe);
+    return result;
+}
+
+QList<Recipe> RecipeService::filterByTags(const QStringList &tags)
+{
+    QList<Recipe> result;
+    for (const Recipe &recipe : repository_->getAllRecipes()) {
+        bool match = true;
+        for (const QString &tag : tags) {
+            if (!recipe.tags.contains(tag.trimmed(), Qt::CaseInsensitive)) {
                 match = false;
                 break;
             }
         }
-
         if (match)
-        {
             result.append(recipe);
-        }
     }
-
     return result;
 }
 
-QString RecipeService::getAIAnalysis(const QString &title, const QString &tags, int calories) {
-    QString t = tags.toLower();
-    QString name = title.toLower();
+QList<Recipe> RecipeService::searchByTitle(const QString &titleText)
+{
+    QList<Recipe> all = repository_->getAllRecipes();
+    if (titleText.trimmed().isEmpty())
+        return all;
 
-    // 1. Логика для Салатов
-    if (t.contains("салат") || name.contains("салат")) {
-        return "🥗 Анализ: Блюдо богато живой клетчаткой. \nИИ-Совет: Используйте нерафинированное оливковое масло, чтобы витамины из овощей усвоились на 100%.";
+    QList<Recipe> result;
+    for (const Recipe &recipe : all) {
+        if (recipe.title.contains(titleText, Qt::CaseInsensitive))
+            result.append(recipe);
     }
-
-    // 2. Логика для Завтраков
-    if (t.contains("завтрак")) {
-        if (calories < 300)
-            return "☀️ Анализ: Легкий заряд энергии. \nИИ-Совет: Добавьте горсть грецких орехов, чтобы чувство сытости сохранилось до самого обеда.";
-        return "💪 Анализ: Плотный питательный завтрак. \nИИ-Совет: Стакан воды с лимоном за 15 минут до еды поможет запустить метаболизм.";
-    }
-
-    // 3. Логика для Супов
-    if (t.contains("суп") || name.contains("суп")) {
-        return "🥣 Анализ: Легкое усвоение и водно-солевой баланс. \nИИ-Совет: Добавьте немного свежей зелени (петрушка, укроп) в тарелку перед подачей для сохранения витамина С.";
-    }
-
-    // 4. Логика для десертов / сладкого
-    if (t.contains("десерт") || t.contains("банан")) {
-        return "🍎 Анализ: Натуральные сахара. \nИИ-Совет: Посыпьте блюдо корицей — она помогает контролировать уровень сахара в крови.";
-    }
-
-    // 5. Общая логика по калориям (если ничего не подошло)
-    if (calories > 600) {
-        return "🥘 Анализ: Высокая энергетическая ценность. \nИИ-Совет: Разделите порцию или сделайте упор на овощной гарнир, чтобы избежать тяжести.";
-    }
-
-    return "🌱 Анализ: Сбалансированный состав. \nИИ-Совет: Наслаждайтесь каждым кусочком, осознанное пережевывание улучшает усвоение нутриентов.";
+    return result;
 }
 
-double RecipeService::calculateDailyCalories(double weight, double height, int age, bool isMale, double activityFactor) {
-    // Формула Миффлина-Сан Жеора
-    double bmr = (10 * weight) + (6.25 * height) - (5 * age);
-    bmr = isMale ? (bmr + 5) : (bmr - 161);
+QString RecipeService::getRecipeAdvice(const QString &title, const QString &tags, int calories)
+{
+    const QString t = tags.toLower();
+    const QString name = title.toLower();
+
+    if (t.contains(QStringLiteral("салат")) || name.contains(QStringLiteral("салат")))
+        return QStringLiteral(
+            "🥗 Анализ: блюдо богато живой клетчаткой.\nСовет: используйте "
+            "нерафинированное оливковое масло, чтобы витамины усвоились лучше.");
+
+    if (t.contains(QStringLiteral("завтрак"))) {
+        if (calories < 300)
+            return QStringLiteral(
+                "☀️ Анализ: лёгкий заряд энергии.\nСовет: добавьте горсть "
+                "грецких орехов, чтобы сытость сохранилась до обеда.");
+        return QStringLiteral(
+            "💪 Анализ: плотный питательный завтрак.\nСовет: стакан воды с "
+            "лимоном за 15 минут до еды поможет запустить метаболизм.");
+    }
+
+    if (t.contains(QStringLiteral("суп")) || name.contains(QStringLiteral("суп")))
+        return QStringLiteral(
+            "🥣 Анализ: лёгкое усвоение и водно-солевой баланс.\nСовет: добавьте "
+            "свежую зелень перед подачей, чтобы сохранить витамин C.");
+
+    if (t.contains(QStringLiteral("десерт")) || t.contains(QStringLiteral("банан")))
+        return QStringLiteral(
+            "🍎 Анализ: натуральные сахара.\nСовет: посыпьте блюдо корицей — "
+            "она помогает контролировать уровень сахара в крови.");
+
+    if (calories > 600)
+        return QStringLiteral(
+            "🥘 Анализ: высокая энергетическая ценность.\nСовет: разделите "
+            "порцию или добавьте овощной гарнир, чтобы избежать тяжести.");
+
+    return QStringLiteral(
+        "🌱 Анализ: сбалансированный состав.\nСовет: осознанное пережёвывание "
+        "улучшает усвоение нутриентов.");
+}
+
+double RecipeService::calculateDailyCalories(double weight, double height, int age,
+                                             bool isMale, double activityFactor)
+{
+    double bmr = (10.0 * weight) + (6.25 * height) - (5.0 * age);
+    bmr += isMale ? 5.0 : -161.0;
     return bmr * activityFactor;
 }
 
-QString RecipeService::calculateFullNutrients(double weight, double height, int age, bool isMale, double activity) {
-    double bmr = (10 * weight) + (6.25 * height) - (5 * age);
-    bmr = isMale ? (bmr + 5) : (bmr - 161);
-    double totalCalories = bmr * activity;
-
-    // Рассчитываем БЖУ (стандарт: 30% белки, 30% жиры, 40% углеводы)
-    double p = (totalCalories * 0.30) / 4; // 1г белка = 4 ккал
-    double f = (totalCalories * 0.30) / 9; // 1г жира = 9 ккал
-    double c = (totalCalories * 0.40) / 4; // 1г углев = 4 ккал
-
-    return QString::number(totalCalories,'f',0) + "|" +
-           QString::number(p,'f',1) + "|" +
-           QString::number(f,'f',1) + "|" +
-           QString::number(c,'f',1);
+QString RecipeService::calculateFullNutrients(double weight, double height, int age,
+                                              bool isMale, double activity)
+{
+    const double totalCalories = calculateDailyCalories(weight, height, age, isMale, activity);
+    const double proteins = (totalCalories * 0.30) / 4.0;
+    const double fats = (totalCalories * 0.30) / 9.0;
+    const double carbs = (totalCalories * 0.40) / 4.0;
+    return QStringLiteral("%1|%2|%3|%4")
+        .arg(QString::number(totalCalories, 'f', 0),
+             QString::number(proteins, 'f', 1),
+             QString::number(fats, 'f', 1),
+             QString::number(carbs, 'f', 1));
 }
 
-#include <QRegularExpression>
+QString RecipeService::scaleIngredients(const QString &ingredients, double multiplier)
+{
+    if (qFuzzyCompare(multiplier, 1.0))
+        return ingredients;
 
-QString RecipeService::scaleIngredients(const QString &ingredients, double multiplier) {
-    if (multiplier == 1.0) return ingredients;
-
-    // Регулярное выражение: ищет целые числа и дроби (типа 2 или 1.5 или 1,5)
-    QRegularExpression re("(\\d+([\\.,]\\d+)?)");
+    static const QRegularExpression number(QStringLiteral("(\\d+([\\.,]\\d+)?)"));
     QString result = ingredients;
-    QRegularExpressionMatchIterator i = re.globalMatch(ingredients);
+    QList<QRegularExpressionMatch> matches;
+    auto it = number.globalMatch(ingredients);
+    while (it.hasNext())
+        matches.prepend(it.next());
 
-    // Собираем изменения с конца строки к началу, чтобы индексы не поплыли
-    struct Replacement { int pos; int len; QString val; };
-    QList<Replacement> replacements;
-
-    while (i.hasNext()) {
-        QRegularExpressionMatch match = i.next();
-        QString numStr = match.captured(1).replace(',', '.'); // заменяем запятую на точку для расчета
-        double num = numStr.toDouble();
-        double scaledNum = num * multiplier;
-
-        // Форматируем число: 1 знак после запятой, убираем лишние нули
-        QString newNum = QString::number(scaledNum, 'f', 1);
-        if (newNum.endsWith(".0")) newNum.chop(2);
-
-        replacements.prepend({(int)match.capturedStart(), (int)match.capturedLength(), newNum});
-    }
-
-    for (const auto &r : replacements) {
-        result.replace(r.pos, r.len, r.val);
-    }
-
-    return result;
-}
-
-QList<Recipe> RecipeService::searchByTitle(const QString& titleText) {
-    QList<Recipe> all = repository_->getAllRecipes();
-    if (titleText.trimmed().isEmpty()) return all;
-
-    QList<Recipe> result;
-    for (const Recipe& r : all) {
-        if (r.title.contains(titleText, Qt::CaseInsensitive)) {
-            result.append(r);
-        }
+    for (const QRegularExpressionMatch &match : matches) {
+        QString numStr = match.captured(1);
+        numStr.replace(QLatin1Char(','), QLatin1Char('.'));
+        QString scaled = QString::number(numStr.toDouble() * multiplier, 'f', 1);
+        if (scaled.endsWith(QStringLiteral(".0")))
+            scaled.chop(2);
+        result.replace(match.capturedStart(), match.capturedLength(), scaled);
     }
     return result;
 }
 
-QString RecipeService::getCleanName(const QString &ingredient) {
+QString RecipeService::getCleanName(const QString &ingredient)
+{
     QString name = ingredient.trimmed();
+    name.replace(QRegularExpression(QStringLiteral("[0-9.,/+\\-]+")), QStringLiteral(" "));
 
-    // 1. Удаляем все цифры, дроби (1/2, 0.5) и технические символы (+, -, заменяя их на пробелы)
-    name.replace(QRegularExpression("[0-9.,\\/+\\-]+"), " ");
+    static const QStringList units = {
+                                      QStringLiteral("ст\\.?\\s*л\\.?"), QStringLiteral("ч\\.?\\s*л\\.?"),
+                                      QStringLiteral("ложка"), QStringLiteral("ложки"), QStringLiteral("ложек"),
+                                      QStringLiteral("грамм"), QStringLiteral("гр"), QStringLiteral("г"),
+                                      QStringLiteral("килограмм"), QStringLiteral("кг"), QStringLiteral("миллилитр"),
+                                      QStringLiteral("мл"), QStringLiteral("литр"), QStringLiteral("л"),
+                                      QStringLiteral("шт\\.?"), QStringLiteral("штука"), QStringLiteral("штуки"),
+                                      QStringLiteral("штук"), QStringLiteral("банка"), QStringLiteral("банки"),
+                                      QStringLiteral("банок"), QStringLiteral("зубчик"), QStringLiteral("зубчика"),
+                                      QStringLiteral("зубчиков"), QStringLiteral("стакан"), QStringLiteral("стакана"),
+                                      QStringLiteral("стаканов"), QStringLiteral("щепотка"), QStringLiteral("щепотки"),
+                                      QStringLiteral("щепоток"), QStringLiteral("по вкусу"), QStringLiteral("упаковка"),
+                                      QStringLiteral("упаковки"), QStringLiteral("упаковок")};
 
-    // 2. Расширенный список единиц измерения и мусорных слов
-    QStringList units = {
-        "ст\\.?\\s*л\\.?", "ч\\.?\\s*л\\.?", "ложка", "ложки", "ложек",
-        "грамм", "гр", "г", "килограмм", "кг", "миллилитр", "мл", "литр", "л",
-        "шт\\.?", "штука", "штуки", "штук", "банка", "банки", "банок",
-        "зубчик", "зубчика", "зубчиков", "стакан", "стакана", "стаканов",
-        "щепотка", "щепотки", "щепоток", "по вкусу", "упаковка", "упаковки", "упаковок"
-    };
-
-    // Пробегаемся по списку единиц измерения и безжалостно вырезаем их (с учетом пробелов вокруг)
     for (const QString &unit : units) {
-        QRegularExpression re("(?:^|\\s)" + unit + "(?:\\s|$)", QRegularExpression::CaseInsensitiveOption);
-        name.replace(re, " ");
+        QRegularExpression re(QStringLiteral("(?:^|\\s)") + unit + QStringLiteral("(?:\\s|$)"),
+                              QRegularExpression::CaseInsensitiveOption);
+        name.replace(re, QStringLiteral(" "));
     }
 
-    // 3. Схлопываем лишние пробелы, которые могли образоваться после удаления
-    name.replace(QRegularExpression("\\s+"), " ");
+    name.replace(QRegularExpression(QStringLiteral("\\s+")), QStringLiteral(" "));
     name = name.trimmed();
-
-    // 4. Делаем первую букву заглавной, чтобы в корзине всё выглядело аккуратно
-    if (!name.isEmpty()) {
+    if (!name.isEmpty())
         name[0] = name[0].toUpper();
-    }
-
     return name;
 }
 
-#include <QRegularExpression>
-
-QStringList RecipeService::getStepList(const QString &instructions) {
-    return instructions.split("\n", Qt::SkipEmptyParts);
+QStringList RecipeService::getStepList(const QString &instructions)
+{
+    return instructions.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
 }
 
-int RecipeService::getTimerSeconds(const QString &stepText) {
-    // Ищем число перед словами "мин" или "минут"
-    QRegularExpression re("(\\d+)\\s*(мин|минут)");
-    QRegularExpressionMatch match = re.match(stepText);
-    if (match.hasMatch()) {
-        return match.captured(1).toInt() * 60; // Превращаем минуты в секунды
-    }
-    return 0; // Если времени нет
+int RecipeService::getTimerSeconds(const QString &stepText)
+{
+    static const QRegularExpression re(QStringLiteral("(\\d+)\\s*(мин|минут)"));
+    const QRegularExpressionMatch match = re.match(stepText);
+    if (match.hasMatch())
+        return match.captured(1).toInt() * 60;
+    return 0;
 }

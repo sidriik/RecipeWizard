@@ -4,19 +4,14 @@ import QtQuick.Layouts
 
 Page {
     id: labPage
-
     background: Rectangle { color: window.colorBg }
 
-    // --- СОСТОЯНИЕ ---
-    property string activeTab: "health" // health, pantry, shop
+    property string activeTab: "health"
     property bool isSearchActive: false
     property var selectedForSearch: []
-    property var currentModel: mainModel
+    property var targets: ["1931", "65", "45", "180"]
 
-    // Цели по умолчанию
-    property var targets: ["1931", "65", "45", "180"] // Калории, Б, Ж, У
 
-    // Синхронизация данных с C++
     Connections {
         target: dbManager
         function onFridgeUpdated() { fridgeView.model = dbManager.getFridgeList() }
@@ -32,19 +27,21 @@ Page {
         fridgeView.model = dbManager.getFridgeList()
         shopView.model = dbManager.getShoppingList()
     }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
-
-        // --- 1. ШАПКА С ТАБАМИ ---
         Rectangle {
             Layout.fillWidth: true; height: 75; color: "white"
             Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#F0EBE3" }
-
             Row {
                 anchors.centerIn: parent; spacing: 50
                 Repeater {
-                    model: [{id: "health", i: "📊", t: "Дневник"}, {id: "pantry", i: "🥦", t: "Продукты"}, {id: "shop", i: "🛒", t: "Покупки"}]
+                    model: [
+                        {id: "health", i: "📊", t: "Дневник"},
+                        {id: "pantry", i: "🥦", t: "Продукты"},
+                        {id: "shop", i: "🛒", t: "Покупки"}
+                    ]
                     delegate: Item {
                         width: 60; height: 60
                         Column {
@@ -66,7 +63,6 @@ Page {
             }
         }
 
-        // --- 2. КОНТЕНТ (СКРОЛЛИТСЯ) ---
         ScrollView {
             Layout.fillWidth: true; Layout.fillHeight: true; clip: true
             contentWidth: availableWidth
@@ -75,16 +71,9 @@ Page {
                 width: Math.min(parent.width - 40, 420)
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 25; topPadding: 20; bottomPadding: 50
-
-                // ==========================================
-                // ВКЛАДКА: ДНЕВНИК (ЗДОРОВЬЕ)
-                // ==========================================
                 Column {
                     width: parent.width; visible: labPage.activeTab === "health"; spacing: 20
-
                     Label { text: "Сегодня"; font.family: "Georgia"; font.pixelSize: 28; font.bold: true; color: window.colorTextMain }
-
-                    // Карточка с кольцом
                     Rectangle {
                         width: parent.width; height: 240; radius: 30; color: "white"; border.color: "#F0EBE3"
                         Rectangle {
@@ -104,8 +93,6 @@ Page {
                             }
                         }
                     }
-
-                    // БЖУ Полоски
                     RowLayout {
                         width: parent.width; spacing: 15
                         property var items: [
@@ -131,9 +118,7 @@ Page {
                         }
                     }
 
-                    // Список приемов пищи
                     Label { text: "Питание"; font.family: "Georgia"; font.pixelSize: 20; font.bold: true; color: window.colorTextMain }
-
                     Column {
                         width: parent.width; spacing: 10
                         Repeater {
@@ -159,19 +144,18 @@ Page {
                         }
                     }
 
-                    // ТРЕКЕР ВОДЫ
                     Rectangle {
                         width: parent.width; height: 85; radius: 25; color: "#F2F7F2"; border.color: "#E2EDE2"
                         RowLayout {
                             anchors.fill: parent; anchors.margins: 20
                             Column {
                                 spacing: 4
-                                Label { text: "🥛 ГИДРАТАЦИЯ"; font.bold: true; font.pixelSize: 10; color: "#4A5D4C" }
+                                Label { text: "🥛 Трекер воды"; font.bold: true; font.pixelSize: 10; color: "#4A5D4C" }
                                 Label { text: window.waterCount + " из 8 стаканов"; font.bold: true; font.pixelSize: 16; color: window.colorTextMain }
                             }
                             Item { Layout.fillWidth: true }
                             Button {
-                                text: "Добавить"; onClicked: if(window.waterCount < 8) window.waterCount++
+                                text: "Добавить"; onClicked: if (window.waterCount < 8) window.waterCount++
                                 background: Rectangle { radius: 12; color: "white"; border.color: "#DCE5DC" }
                             }
                         }
@@ -184,28 +168,22 @@ Page {
                         onClicked: calcPopup.open()
                     }
                 }
-
-                // ==========================================
-                // ВКЛАДКА: ПРОДУКТЫ (ХОЛОДИЛЬНИК)
-                // ==========================================
                 Column {
                     width: parent.width; visible: labPage.activeTab === "pantry"; spacing: 20
-
                     Label { text: "Мой Холодильник"; font.family: "Georgia"; font.pixelSize: 26; font.bold: true }
-
                     RowLayout {
                         width: parent.width; height: 50; spacing: 10
                         TextField {
-                            id: fridgeInput; placeholderText: "Добавить продукт...";
+                            id: fridgeInput; placeholderText: "Добавить продукт..."
                             Layout.fillWidth: true; Layout.preferredHeight: 50
                             background: Rectangle { radius: 12; color: "white"; border.color: fridgeInput.activeFocus ? window.colorPrimary : "#E0DCD5"; border.width: fridgeInput.activeFocus ? 2 : 1 }
-                            onAccepted: { if(text.trim() !== "") { dbManager.addToFridge(text.trim()); text = "" } }
+                            onAccepted: { if (text.trim() !== "") { dbManager.addToFridge(text.trim()); text = "" } }
                         }
                         Button {
                             text: "＋"; Layout.preferredWidth: 50; Layout.preferredHeight: 50
                             background: Rectangle { radius: 12; color: window.colorPrimary }
                             contentItem: Text { text: parent.text; color: "white"; font.bold: true; font.pixelSize: 18; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                            onClicked: { if(fridgeInput.text.trim() !== "") { dbManager.addToFridge(fridgeInput.text.trim()); fridgeInput.text = "" } }
+                            onClicked: { if (fridgeInput.text.trim() !== "") { dbManager.addToFridge(fridgeInput.text.trim()); fridgeInput.text = "" } }
                         }
                     }
 
@@ -220,44 +198,28 @@ Page {
                                     text: modelData
                                     Layout.fillWidth: true
                                     checked: labPage.selectedForSearch.indexOf(modelData) !== -1
-
-                                    // НАСТРОЙКА ИНДИКАТОРА (Квадратик/Кружок)
                                     indicator: Rectangle {
-                                        implicitWidth: 22
-                                        implicitHeight: 22
+                                        implicitWidth: 22; implicitHeight: 22
                                         x: fridgeBox.leftPadding
                                         y: parent.height / 2 - height / 2
-                                        radius: 6 // Мягкое скругление углов
+                                        radius: 6
                                         color: fridgeBox.checked ? window.colorPrimary : "transparent"
                                         border.color: fridgeBox.checked ? window.colorPrimary : "#C8C3BC"
                                         border.width: fridgeBox.checked ? 0 : 1.5
-
-                                        // Анимация плавного изменения цвета
                                         Behavior on color { ColorAnimation { duration: 150 } }
                                         Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                                        // Сама галочка внутри (минималистичная "✓")
                                         Text {
-                                            text: "✓"
-                                            color: "white"
-                                            font.bold: true
-                                            font.pixelSize: 14
-                                            anchors.centerIn: parent
-                                            visible: fridgeBox.checked
+                                            text: "✓"; color: "white"; font.bold: true; font.pixelSize: 14
+                                            anchors.centerIn: parent; visible: fridgeBox.checked
                                         }
                                     }
-
-                                    // НАСТРОЙКА ТЕКСТА РЯДОМ
                                     contentItem: Text {
                                         text: fridgeBox.text
-                                        font.pixelSize: 14
-                                        font.weight: Font.Medium
-                                        // Если выбран — текст чуть темнее, если нет — обычный
+                                        font.pixelSize: 14; font.weight: Font.Medium
                                         color: fridgeBox.checked ? window.colorTextMain : "#555"
-                                        leftPadding: fridgeBox.indicator.width + 12 // Отступ от индикатора до текста
+                                        leftPadding: fridgeBox.indicator.width + 12
                                         verticalAlignment: Text.AlignVCenter
                                     }
-
                                     onToggled: {
                                         var list = labPage.selectedForSearch.slice();
                                         if (checked) {
@@ -297,7 +259,6 @@ Page {
                         }
                     }
 
-                    // РЕЗУЛЬТАТЫ ПОИСКА
                     Column {
                         width: parent.width; spacing: 15; visible: labPage.isSearchActive
                         Label { text: "РЕЗУЛЬТАТЫ ПО УБЫВАНИЮ СОВПАДЕНИЙ:"; font.bold: true; font.pixelSize: 11; color: window.colorPrimary }
@@ -309,38 +270,24 @@ Page {
                     }
                 }
 
-                // ==========================================
-                // ВКЛАДКА: ПОКУПКИ (ИСПРАВЛЕННЫЙ ДИЗАЙН)
-                // ==========================================
                 Column {
                     width: parent.width
                     visible: labPage.activeTab === "shop"
                     spacing: 20
-
                     Label {
                         text: "Список покупок"
-                        font.family: "Georgia"
-                        font.pixelSize: 26
-                        font.bold: true
-                        color: window.colorTextMain
+                        font.family: "Georgia"; font.pixelSize: 26; font.bold: true; color: window.colorTextMain
                     }
 
-                    // Поле ввода с подсветкой рамки
                     RowLayout {
-                        width: parent.width
-                        height: 50
-                        spacing: 10
-
+                        width: parent.width; height: 50; spacing: 10
                         TextField {
                             id: shopInput
                             placeholderText: "Нужно купить..."
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 50
-                            font.pixelSize: 14
-                            leftPadding: 15
+                            Layout.fillWidth: true; Layout.preferredHeight: 50
+                            font.pixelSize: 14; leftPadding: 15
                             background: Rectangle {
-                                radius: 12
-                                color: "white"
+                                radius: 12; color: "white"
                                 border.color: shopInput.activeFocus ? window.colorPrimary : "#E0DCD5"
                                 border.width: shopInput.activeFocus ? 2 : 1
                             }
@@ -352,11 +299,9 @@ Page {
                                 }
                             }
                         }
-
                         Button {
                             text: "＋"
-                            Layout.preferredWidth: 55
-                            Layout.preferredHeight: 50
+                            Layout.preferredWidth: 55; Layout.preferredHeight: 50
                             background: Rectangle { radius: 12; color: window.colorPrimary }
                             contentItem: Text { text: "+"; color: "white"; font.bold: true; font.pixelSize: 22; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                             onClicked: {
@@ -369,55 +314,36 @@ Page {
                         }
                     }
 
-                    // Список покупок (БЕЛЫЕ КАРТОЧКИ)
                     ListView {
                         id: shopView
-                        width: parent.width
-                        height: contentHeight
-                        spacing: 10
-                        interactive: false
+                        width: parent.width; height: contentHeight
+                        spacing: 10; interactive: false
                         model: dbManager.getShoppingList()
-
                         delegate: Rectangle {
-                            width: shopView.width
-                            height: 54
-                            radius: 15
-                            color: "white" // Сделали белым
-                            border.color: "#F0EBE3"
-
+                            width: shopView.width; height: 54; radius: 15
+                            color: "white"; border.color: "#F0EBE3"
                             RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 15
-                                anchors.rightMargin: 10
-                                spacing: 12
-
+                                anchors.fill: parent; anchors.leftMargin: 15; anchors.rightMargin: 10; spacing: 12
                                 CheckBox {
                                     id: shopBox
                                     text: modelData
-                                    Layout.fillWidth: true
-                                    Layout.alignment: Qt.AlignVCenter // Центровка по вертикали
-
+                                    Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter
                                     indicator: Rectangle {
-                                        implicitWidth: 24
-                                        implicitHeight: 24
-                                        radius: 7
+                                        implicitWidth: 24; implicitHeight: 24; radius: 7
                                         y: parent.height / 2 - height / 2
                                         color: shopBox.checked ? window.colorPrimary : "transparent"
                                         border.color: shopBox.checked ? window.colorPrimary : "#C8C3BC"
                                         border.width: shopBox.checked ? 0 : 1.5
                                         Text { text: "✓"; color: "white"; font.bold: true; anchors.centerIn: parent; visible: shopBox.checked }
                                     }
-
                                     contentItem: Text {
                                         text: shopBox.text
                                         font.pixelSize: 15
                                         color: shopBox.checked ? "#AAA" : window.colorTextMain
-                                        leftPadding: 38
-                                        verticalAlignment: Text.AlignVCenter
+                                        leftPadding: 38; verticalAlignment: Text.AlignVCenter
                                         font.strikeout: shopBox.checked
                                         opacity: shopBox.checked ? 0.6 : 1.0
                                     }
-
                                     onToggled: {
                                         if (checked) {
                                             dbManager.addToFridge(modelData)
@@ -426,25 +352,11 @@ Page {
                                         }
                                     }
                                 }
-
                                 Button {
-                                    text: "✕"
-                                    flat: true
-                                    Layout.preferredWidth: 40
-                                    Layout.preferredHeight: 40
-                                    Layout.alignment: Qt.AlignVCenter // Центровка по вертикали
-                                    contentItem: Text {
-                                        text: "✕"
-                                        color: "#CC1111"
-                                        opacity: 0.2
-                                        font.pixelSize: 16
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    onClicked: {
-                                        dbManager.removeFromShoppingList(modelData)
-                                        refresh()
-                                    }
+                                    text: "✕"; flat: true
+                                    Layout.preferredWidth: 40; Layout.preferredHeight: 40; Layout.alignment: Qt.AlignVCenter
+                                    contentItem: Text { text: "✕"; color: "#CC1111"; opacity: 0.2; font.pixelSize: 16; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                    onClicked: { dbManager.removeFromShoppingList(modelData); refresh() }
                                 }
                             }
                         }
@@ -452,20 +364,11 @@ Page {
 
                     Button {
                         text: "ОЧИСТИТЬ КОРЗИНУ"
-                        width: parent.width
-                        flat: true
-                        onClicked: {
-                            dbManager.clearShoppingList()
-                            refresh()
-                        }
+                        width: parent.width; flat: true
+                        onClicked: { dbManager.clearShoppingList(); refresh() }
                         contentItem: Text {
-                            text: parent.text
-                            font.pixelSize: 11
-                            font.bold: true
-                            font.underline: true
-                            color: window.colorTextLight
-                            horizontalAlignment: Text.AlignHCenter
-                            opacity: 0.6
+                            text: parent.text; font.pixelSize: 11; font.bold: true; font.underline: true
+                            color: window.colorTextLight; horizontalAlignment: Text.AlignHCenter; opacity: 0.6
                         }
                     }
                 }
@@ -473,7 +376,6 @@ Page {
         }
     }
 
-    // --- ПОПАП ДЛЯ ВВОДА ДАННЫХ ---
     Popup {
         id: calcPopup
         x: (parent.width - width) / 2; y: 50; width: 340; modal: true
