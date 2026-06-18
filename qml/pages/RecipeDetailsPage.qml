@@ -114,7 +114,7 @@ Page {
                         Layout.fillWidth: true; Layout.preferredHeight: 45
                         background: Rectangle { radius: 12; color: aiBtn.pressed ? "#BF5A39" : window.colorPrimary }
                         contentItem: Text { text: parent.text; color: "white"; font.bold: true; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                        onClicked: detailsPage.aiAnalysisResult = myRecipeService.getAIAnalysis(recipeTitle, recipeTags, recipeCalories)
+                        onClicked: detailsPage.aiAnalysisResult = myRecipeService.getRecipeAdvice(recipeTitle, recipeTags, recipeCalories)
                     }
                 }
             }

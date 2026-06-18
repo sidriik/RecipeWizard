@@ -109,6 +109,8 @@ void RecipeModel::applyFilters(const QStringList &tags, int maxCal)
                 filtered.append(recipe);
         }
         setRecipes(filtered);
+        if (currentSort_ != "Без сортировки")
+            sortRecipes(currentSort_);
     } catch (const RecipeException &error) {
         qWarning("Ошибка фильтрации: %s", error.what());
         setRecipes({});
@@ -127,6 +129,7 @@ void RecipeModel::searchByTitle(const QString &text)
 
 void RecipeModel::sortRecipes(const QString &sortType)
 {
+    currentSort_ = sortType;
     beginResetModel();
     std::sort(recipes_.begin(), recipes_.end(), [&](const Recipe &a, const Recipe &b) {
         if (sortType == QStringLiteral("Калории ↑")) return a.calories < b.calories;

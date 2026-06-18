@@ -239,7 +239,36 @@ Page {
                     onClicked: { searchField.text = ""; for (let i = 0; i < tagsModel.count; ++i) tagsModel.setProperty(i, "selected", false); homePage.calorieIndex = 2; mainModel.refresh() }
                 }
             }
+            ComboBox {
+                id: sortBox
+                width: 240
 
+                model: [
+                    "Без сортировки",
+                    "Калории ↑",
+                    "Калории ↓",
+                    "Белки ↑",
+                    "Белки ↓",
+                    "Жиры ↑",
+                    "Жиры ↓",
+                    "Углеводы ↑",
+                    "Углеводы ↓"
+                ]
+
+                onCurrentTextChanged: {
+                    if (currentText !== "Без сортировки")
+                        mainModel.sortRecipes(currentText)
+                    else
+                        homePage.applyTagFilter()
+                }
+
+                background: Rectangle {
+                    radius: 14
+                    color: "white"
+                    border.color: "#F0EBE3"
+                    border.width: 1
+                }
+            }
             ListView {
                 id: recipeList
                 model: mainModel

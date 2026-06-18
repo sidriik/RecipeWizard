@@ -57,6 +57,8 @@ QList<Recipe> RecipeService::findBestRecipes(const QStringList &availableIngredi
     };
 
     QList<Ranked> ranked;
+    // Проходим по всем рецептам и считаем, сколько доступных ингредиентов есть в составе.
+    // Это позволяет найти рецепты, для которых нужно докупать меньше всего продуктов.
     for (const Recipe &recipe : repository_->getAllRecipes()) {
         const QString composition = recipe.ingredients.toLower();
         int matches = 0;
@@ -69,6 +71,8 @@ QList<Recipe> RecipeService::findBestRecipes(const QStringList &availableIngredi
             ranked.append({recipe, matches});
     }
 
+           // Сортируем полученный список по убыванию количества совпадений,
+           // чтобы самые подходящие рецепты оказались в начале списка.
     std::sort(ranked.begin(), ranked.end(),
               [](const Ranked &a, const Ranked &b) { return a.matches > b.matches; });
 
@@ -150,6 +154,8 @@ QString RecipeService::getRecipeAdvice(const QString &title, const QString &tags
         "улучшает усвоение нутриентов.");
 }
 
+// Расчет суточной нормы калорий по формуле Миффлина — Сан-Жеора.
+// Формула является общеизвестным медицинским стандартом и взята из открытых источников.
 double RecipeService::calculateDailyCalories(double weight, double height, int age,
                                              bool isMale, double activityFactor)
 {

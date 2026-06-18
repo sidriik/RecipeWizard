@@ -109,4 +109,5 @@ private:
     QList<Recipe> recipes_;   ///< Текущий показываемый список.
     QStringList activeTags_;  ///< Выбранные теги фильтра.
     int maxCalories_ = 2000;  ///< Текущая граница калорийности.
+    QString currentSort_ = "Без сортировки"; ///< Текущий выбранный тип сортировки.
 };

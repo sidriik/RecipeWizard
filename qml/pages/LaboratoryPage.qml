@@ -348,7 +348,7 @@ Page {
                                         if (checked) {
                                             dbManager.addToFridge(modelData)
                                             dbManager.removeFromShoppingList(modelData)
-                                            refresh()
+                                            labPage.refresh()
                                         }
                                     }
                                 }

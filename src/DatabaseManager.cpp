@@ -12,7 +12,7 @@ void execOrThrow(QSqlQuery &query)
         throw RecipeException(query.lastError().text());
 }
 
-} // namespace
+}
 
 DatabaseManager::DatabaseManager(QObject *parent)
     : QObject(parent)

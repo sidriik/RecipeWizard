@@ -79,9 +79,15 @@ Rectangle {
                         text: dbManager.isFavorite(model.title) ? "❤️" : "🤍"
                         font.pixelSize: 12
                     }
+
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: currentModel.toggleFavoriteInModel(index)
+                        onClicked: {
+                            currentModel.toggleFavoriteInModel(index)
+
+                            if (typeof favoritesModel !== "undefined")
+                                favoritesModel.refresh()
+                        }
                     }
                 }
             }
@@ -113,7 +119,11 @@ Rectangle {
             RowLayout {
                 Layout.fillWidth: true
                 Text {
-                    text: "<b>КБЖУ:</b> " + model.calories + " ккал / Б" + model.proteins + "г"
+                    text: "<b>КБЖУ:</b> "
+                          + model.calories + " ккал  "
+                          + "Б" + model.proteins + "  "
+                          + "Ж" + model.fats + "  "
+                          + "У" + model.carbs
                     font.pixelSize: 10; color: "#D96C4A"
                 }
                 Item { Layout.fillWidth: true }

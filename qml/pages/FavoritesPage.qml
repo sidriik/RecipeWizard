@@ -6,7 +6,12 @@ Page {
     id: favoritesPage
     background: Rectangle { color: window.colorBg }
 
-    onVisibleChanged: if (visible) favoritesView.forceLayout()
+    onVisibleChanged: {
+        if (visible) {
+            favoritesModel.refresh()
+            favoritesView.forceLayout()
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -24,7 +29,7 @@ Page {
             id: favoritesView
             Layout.fillWidth: true; Layout.fillHeight: true
             clip: true
-            model: mainModel
+            model: favoritesModel
             spacing: 0
 
             delegate: Item {

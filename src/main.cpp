@@ -52,13 +52,14 @@ int main(int argc, char *argv[])
     RecipeService service(&repository);
     RecipeModel mainModel(&service);
     RecipeModel pantryModel(&service);
-
+    RecipeModel favoritesModel(&service);
     QQmlApplicationEngine engine;
     QQmlContext *context = engine.rootContext();
     context->setContextProperty(QStringLiteral("dbManager"), &DatabaseManager::instance());
     context->setContextProperty(QStringLiteral("myRecipeService"), &service);
     context->setContextProperty(QStringLiteral("mainModel"), &mainModel);
     context->setContextProperty(QStringLiteral("pantryModel"), &pantryModel);
+    context->setContextProperty(QStringLiteral("favoritesModel"), &favoritesModel);
 
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,

@@ -63,3 +63,4 @@ docs/html/
 
 .vscode/
 .idea/
+.qtcreator/CMakeLists.txt.user

@@ -12,14 +12,12 @@ const QString kSelectColumns =
     QStringLiteral("id, title, ingredients, tags, calories, proteins, fats, "
                    "carbs, servings, instructions, imageUrl");
 
-// Выполнить запрос или бросить исключение с текстом ошибки SQLite.
 void execOrThrow(QSqlQuery &query)
 {
     if (!query.exec())
         throw RecipeException(query.lastError().text());
 }
 
-// Прочитать одну строку результата в структуру рецепта.
 Recipe readRow(const QSqlQuery &query)
 {
     Recipe recipe;
@@ -37,7 +35,7 @@ Recipe readRow(const QSqlQuery &query)
     return recipe;
 }
 
-} // namespace
+}
 
 RecipeRepository::RecipeRepository(QSqlDatabase db)
     : db_(db)
